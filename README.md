@@ -38,7 +38,7 @@ conda update conda
 conda create --name nextflow
 conda activate nextflow
 conda install -c bioconda nextflow
-nextflow run jianhong/rnaseq -profile test,conda
+srun --mem 60G -c 2 nextflow run jianhong/rnaseq -profile test,conda
 ```
 
 
