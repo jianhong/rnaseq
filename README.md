@@ -35,12 +35,29 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ```bash
 conda update conda
-conda create --name nextflow
+wget https://raw.githubusercontent.com/jianhong/rnaseq/master/environment.yml
+conda env create -n nextflow -f environment.yml
+rm environment.yml
 conda activate nextflow
-conda install -c bioconda nextflow
 srun --mem 60G -c 2 nextflow run jianhong/rnaseq -profile test,conda
 ```
 
+## Update
+
+```bash
+conda activate nextflow
+nextflow pull jianhong/rnaseq
+```
+
+## Remove
+
+```bash
+conda activate nextflow
+nextflow drop jianhong/rnaseq
+conda deactivate
+conda remove --name nextflow --all
+conda info --envs
+```
 
 ## Quick Start
 

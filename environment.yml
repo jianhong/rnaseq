@@ -12,12 +12,19 @@ dependencies:
   - conda-forge::r-data.table=1.12.4
   - conda-forge::r-gplots=3.0.1.1
   - conda-forge::r-markdown=1.1
+  - nextflow
 
   ## bioconda packages, see above
   - bioconductor-dupradar=1.14.0
   - bioconductor-edger=3.26.5
   - bioconductor-tximeta=1.2.2
   - bioconductor-summarizedexperiment=1.14.0
+  - bioconductor-chippeakAnno=3.18.2
+  - bioconductor-deseq2=1.24.0
+  - bioconductor-clusterprofiler=3.12.0
+  - bioconductor-enhancedvolcano=1.2.0
+  - r-writexls=5.0.0
+  - r-scales=1.1.1
   - deeptools=3.3.1
   - fastqc=0.11.8
   - gffread=0.11.4

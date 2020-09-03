@@ -117,6 +117,7 @@ if (params.genomes && params.genome && !params.genomes.containsKey(params.genome
     exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
 }
 
+
 // Reference index path configuration
 // Define these here - after the profiles are loaded with the iGenomes paths
 params.star_index = params.genome ? params.genomes[ params.genome ].star ?: false : false
@@ -125,6 +126,7 @@ params.gtf = params.genome ? params.genomes[ params.genome ].gtf ?: false : fals
 params.gff = params.genome ? params.genomes[ params.genome ].gff ?: false : false
 params.bed12 = params.genome ? params.genomes[ params.genome ].bed12 ?: false : false
 params.hisat2_index = params.genome ? params.genomes[ params.genome ].hisat2 ?: false : false
+params.species = params.genome ? params.genomes[ params.genome ].species ?: false : false
 
 ch_mdsplot_header = Channel.fromPath("$baseDir/assets/mdsplot_header.txt", checkIfExists: true)
 ch_heatmap_header = Channel.fromPath("$baseDir/assets/heatmap_header.txt", checkIfExists: true)
@@ -1071,7 +1073,7 @@ if (!params.skipAlignment) {
       star_aligned
           .filter { logs, bams -> check_log(logs) }
           .flatMap {  logs, bams -> bams }
-      .into { bam_count; bam_rseqc; bam_qualimap; bam_preseq; bam_markduplicates; bam_featurecounts; bam_stringtieFPKM; bam_forSubsamp; bam_skipSubsamp  }
+      .into { bam_count; bam_rseqc; bam_qualimap; bam_preseq; bam_markduplicates; bam_bigwig; bam_featurecounts; bam_stringtieFPKM; bam_forSubsamp; bam_skipSubsamp  }
   }
 
 
@@ -1162,7 +1164,7 @@ if (!params.skipAlignment) {
           file wherearemyfiles from ch_where_hisat2_sort.collect()
 
           output:
-          file "${hisat2_bam.baseName}.sorted.bam" into bam_count, bam_rseqc, bam_qualimap, bam_preseq, bam_markduplicates, bam_featurecounts, bam_stringtieFPKM,bam_forSubsamp, bam_skipSubsamp
+          file "${hisat2_bam.baseName}.sorted.bam" into bam_count, bam_rseqc, bam_qualimap, bam_preseq, bam_markduplicates, bam_bigwig, bam_featurecounts, bam_stringtieFPKM,bam_forSubsamp, bam_skipSubsamp
           file "${hisat2_bam.baseName}.sorted.bam.bai" into bam_index_rseqc, bam_index_genebody
           file "where_are_my_files.txt"
 
@@ -1410,7 +1412,7 @@ if (!params.skipAlignment) {
 
 
   /*
-   * STEP 10 - Merge featurecounts
+   * STEP 10 - Merge featurecounts and do differential analysis
    */
   process merge_featureCounts {
       label "mid_memory"
@@ -1421,7 +1423,7 @@ if (!params.skipAlignment) {
       file input_files from featureCounts_to_merge.collect()
 
       output:
-      file 'merged_gene_counts.txt' into featurecounts_merged
+      file "*" into featurecounts_merged
 
       script:
       // Redirection (the `<()`) for the win!
@@ -1432,6 +1434,7 @@ if (!params.skipAlignment) {
         "<(tail -n +2 ${filename} | sed 's:.sorted.bam::' | cut -f8)"}.join(" ")
       """
       paste $gene_ids $counts > merged_gene_counts.txt
+      DESeq2FromFeatureCounts.r ${params.species} ${params.design} merged_gene_counts.txt
       """
   }
 
@@ -1685,7 +1688,33 @@ process multiqc {
 }
 
 /*
- * STEP 15 - Output Description HTML
+ * STEP 15 - Make bigwig files
+ */
+process createBigWig {
+    tag "${bam.baseName - '.sorted'}"
+    publishDir "${params.outdir}/bigwigs", mode: 'copy',
+        saveAs: {filename -> "$filename"}
+
+    when:
+    !params.skipBigWig
+
+    input:
+    file bam from bam_bigwig
+
+    output:
+    file "${bam.baseName}.norm.CPM.bw"
+
+    script:
+    """
+    bamCoverage -b $bam \\
+       -o ${bam.baseName}.norm.CPM.bw \\
+       --binSize 10  --normalizeUsing CPM
+    """
+}
+
+
+/*
+ * STEP 16 - Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: 'copy'
@@ -1701,6 +1730,8 @@ process output_documentation {
     markdown_to_html.r $output_docs results_description.html
     """
 }
+
+
 
 /*
  * Completion e-mail notification
@@ -1800,6 +1831,16 @@ workflow.onComplete {
     output_hf.withWriter { w -> w << email_html }
     def output_tf = file("${output_d}/pipeline_report.txt")
     output_tf.withWriter { w -> w << email_txt }
+    
+    // write index file
+    def index_f = file("${params.outdir}/index.html")
+    createIndexHTML = """
+       Rscript -e "rmarkdown::render('$baseDir/docs/index.Rmd', output_format='html_document', output_dir='$workDir', output_file='index.html')"
+       cat $workDir/index.html
+                """
+
+    index_html = createIndexHTML.execute().text
+    index_f.withWrite { w -> w << index_html}
 
     c_reset = params.monochrome_logs ? '' : "\033[0m";
     c_purple = params.monochrome_logs ? '' : "\033[0;35m";
