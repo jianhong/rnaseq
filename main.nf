@@ -1706,6 +1706,7 @@ process createBigWig {
 
     script:
     """
+    samtools index $bam
     bamCoverage -b $bam \\
        -o ${bam.baseName}.norm.CPM.bw \\
        --binSize 10  --normalizeUsing CPM
