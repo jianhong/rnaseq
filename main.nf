@@ -1836,12 +1836,10 @@ workflow.onComplete {
     // write index file
     def index_f = file("${params.outdir}/index.html")
     createIndexHTML = """
-       Rscript -e "rmarkdown::render('$baseDir/docs/index.Rmd', output_format='html_document', output_dir='$workDir', output_file='index.html')"
-       cat $workDir/index.html
+       Rscript -e "rmarkdown::render('$baseDir/docs/index.Rmd', output_format='html_document', output_dir='${params.outdir}', output_file='index.html')"
                 """
 
-    index_html = createIndexHTML.execute().text
-    index_f.withWrite { w -> w << index_html}
+    index_html = createIndexHTML.execute()
 
     c_reset = params.monochrome_logs ? '' : "\033[0m";
     c_purple = params.monochrome_logs ? '' : "\033[0;35m";
