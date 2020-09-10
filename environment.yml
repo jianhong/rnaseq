@@ -25,6 +25,7 @@ dependencies:
   - bioconductor-enhancedvolcano=1.2.0
   - r-writexls=5.0.0
   - r-scales=1.1.1
+  - r-rmarkdown=2.3
   - deeptools=3.3.1
   - fastqc=0.11.8
   - gffread=0.11.4
