@@ -1241,6 +1241,7 @@ if (!params.skipAlignment) {
    * STEP 5 - preseq analysis
    */
   process preseq {
+      errorStrategy 'ignore'
       tag "${bam_preseq.baseName - '.sorted'}"
       publishDir "${params.outdir}/preseq", mode: 'copy'
 
@@ -1400,15 +1401,16 @@ if (!params.skipAlignment) {
       }
       // Try to get real sample name
       sample_name = bam_featurecounts.baseName - 'Aligned.sortedByCoord.out' - '_subsamp.sorted'
-      biotype_qc = params.skipBiotypeQC ? '' : "featureCounts -a $gtf -g $biotype -o ${bam_featurecounts.baseName}_biotype.featureCounts.txt -p -s $featureCounts_direction $bam_featurecounts"
       mod_biotype = params.skipBiotypeQC ? '' : "cut -f 1,7 ${bam_featurecounts.baseName}_biotype.featureCounts.txt | tail -n +3 | cat $biotypes_header - >> ${bam_featurecounts.baseName}_biotype_counts_mqc.txt && mqc_features_stat.py ${bam_featurecounts.baseName}_biotype_counts_mqc.txt -s $sample_name -f rRNA -o ${bam_featurecounts.baseName}_biotype_counts_gs_mqc.tsv"
       if (params.singleEnd) {
+      biotype_qc = params.skipBiotypeQC ? '' : "featureCounts -a $gtf -g $biotype -o ${bam_featurecounts.baseName}_biotype.featureCounts.txt -p -s $featureCounts_direction $bam_featurecounts"
             """
             featureCounts -a $gtf -g ${params.fc_group_features} -t ${params.fc_count_type} -o ${bam_featurecounts.baseName}_gene.featureCounts.txt $extraAttributes -p -s $featureCounts_direction $bam_featurecounts
             $biotype_qc
             $mod_biotype
             """
         } else {
+        biotype_qc = params.skipBiotypeQC ? '' : "featureCounts -a $gtf -g $biotype -o ${bam_featurecounts.baseName}_biotype.featureCounts.txt -p -s $featureCounts_direction ${bam_featurecounts.baseName}.srt.bam"
             """
             samtools sort -n $bam_featurecounts -o ${bam_featurecounts.baseName}.nameSrt.bam
             samtools fixmate -r -O bam ${bam_featurecounts.baseName}.nameSrt.bam ${bam_featurecounts.baseName}.fixed.bam
@@ -1685,7 +1687,7 @@ process multiqc {
     file workflow_summary from create_workflow_summary(summary)
 
     output:
-    file "*multiqc_report.html" into multiqc_report
+    file "*multiqc_report.html" into multiqc_report, multiqc_done
     file "*_data"
     file "multiqc_plots"
 
@@ -1702,6 +1704,7 @@ process multiqc {
  * STEP 15 - Make bigwig files
  */
 process createBigWig {
+    errorStrategy 'ignore'
     tag "${bam.baseName - '.sorted'}"
     publishDir "${params.outdir}/bigwigs", mode: 'copy',
         saveAs: {filename -> "$filename"}
@@ -1713,7 +1716,7 @@ process createBigWig {
     file bam from bam_bigwig
 
     output:
-    file "${bam.baseName}.norm.CPM.bw"
+    file "${bam.baseName}.norm.CPM.bw" 
 
     script:
     """
@@ -1724,9 +1727,29 @@ process createBigWig {
     """
 }
 
+/*
+* STEP 16 - create index
+*/
+process output_index {
+    errorStrategy 'ignore'
+    label 'low_memory'
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    val qc_val from multiqc_done.count()
+
+    output:
+    file "index.html"
+
+    script:
+    """
+    create.index.r "$baseDir/docs/index.Rmd" "${params.outdir}"
+    """
+}
+
 
 /*
- * STEP 16 - Output Description HTML
+ * STEP 17 - Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: 'copy'

@@ -1,0 +1,25 @@
+---
+title: "jianhong RNAseq pipeline"
+author: "Jianhong Ou"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+##insertBlockHere##
+setwd(resultsFolder)
+```
+
+## Introduction
+
+This is output of "jianhong RNAseq pipeline". 
+The documentation for each folder is listed in file
+[results_description.html](pipeline_info/results_description.html)
+
+In the folder, you will see following subfolders:
+
+```{r}
+dir(".")
+```
+
+
