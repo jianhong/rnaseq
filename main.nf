@@ -1664,6 +1664,7 @@ if (params.pseudo_aligner == 'salmon') {
  * STEP 14 - MultiQC
  */
 process multiqc {
+    errorStrategy 'ignore'
     publishDir "${params.outdir}/MultiQC", mode: 'copy'
 
     when:
