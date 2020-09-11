@@ -1241,7 +1241,7 @@ if (!params.skipAlignment) {
    * STEP 5 - preseq analysis
    */
   process preseq {
-      errorStrategy 'ignore'
+      errorStrategy { task.attempt <= 3 ? 'retry' : 'ignore' }
       tag "${bam_preseq.baseName - '.sorted'}"
       publishDir "${params.outdir}/preseq", mode: 'copy'
 
@@ -1664,7 +1664,7 @@ if (params.pseudo_aligner == 'salmon') {
  * STEP 14 - MultiQC
  */
 process multiqc {
-    errorStrategy 'ignore'
+    errorStrategy { task.attempt <= 3 ? 'retry' : 'ignore' }
     publishDir "${params.outdir}/MultiQC", mode: 'copy'
 
     when:
@@ -1705,7 +1705,7 @@ process multiqc {
  * STEP 15 - Make bigwig files
  */
 process createBigWig {
-    errorStrategy 'ignore'
+    errorStrategy { task.attempt <= 3 ? 'retry' : 'ignore' }
     tag "${bam.baseName - '.sorted'}"
     publishDir "${params.outdir}/bigwigs", mode: 'copy',
         saveAs: {filename -> "$filename"}
@@ -1732,10 +1732,13 @@ process createBigWig {
 * STEP 16 - create index
 */
 process output_index {
-    errorStrategy 'ignore'
+    errorStrategy { task.attempt <= 3 ? 'retry' : 'ignore' }
     label 'low_memory'
     publishDir "${params.outdir}", mode: 'copy'
 
+    when:
+    !params.skipMultiQC
+    
     input:
     val qc_val from multiqc_done.count()
 
@@ -1744,7 +1747,7 @@ process output_index {
 
     script:
     """
-    create.index.r "$baseDir/docs/index.Rmd" "${params.outdir}"
+    create.index.r "$baseDir/docs/index.Rmd" "${params.parent_path}/${params.outdir}"
     """
 }
 
