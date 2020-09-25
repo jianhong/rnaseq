@@ -1691,7 +1691,6 @@ process multiqc {
     file "*multiqc_report.html" into multiqc_report, multiqc_done
     file "*_data"
     file "multiqc_plots"
-    file "index.html" 
 
     script:
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
@@ -1699,7 +1698,7 @@ process multiqc {
     """
     multiqc . -f $rtitle $rfilename --config $multiqc_config \\
         -m custom_content -m picard -m preseq -m rseqc -m featureCounts -m hisat2 -m star -m cutadapt -m sortmerna -m fastqc -m qualimap -m salmon
-    create.index.r "$baseDir/docs/index.Rmd" "${params.parent_path}/${params.outdir}"
+    #create.index.r "$baseDir/docs/index.Rmd" "${params.parent_path}/${params.outdir}"
     """
 }
 
