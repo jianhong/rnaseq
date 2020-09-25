@@ -12,7 +12,7 @@ setwd(resultsFolder)
 
 ## Introduction
 
-This is output of "jianhong RNAseq pipeline". 
+This is output of "jianhong RNAseq pipeline" which is modified from nf-core/rnaseq. 
 The documentation for each folder is listed in file
 [results_description.html](pipeline_info/results_description.html)
 

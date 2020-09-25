@@ -1691,6 +1691,7 @@ process multiqc {
     file "*multiqc_report.html" into multiqc_report, multiqc_done
     file "*_data"
     file "multiqc_plots"
+    file "index.html" 
 
     script:
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
@@ -1698,6 +1699,7 @@ process multiqc {
     """
     multiqc . -f $rtitle $rfilename --config $multiqc_config \\
         -m custom_content -m picard -m preseq -m rseqc -m featureCounts -m hisat2 -m star -m cutadapt -m sortmerna -m fastqc -m qualimap -m salmon
+    create.index.r "$baseDir/docs/index.Rmd" "${params.parent_path}/${params.outdir}"
     """
 }
 
@@ -1728,32 +1730,9 @@ process createBigWig {
     """
 }
 
-/*
-* STEP 16 - create index
-*/
-process output_index {
-    errorStrategy { task.attempt <= 3 ? 'retry' : 'ignore' }
-    label 'low_memory'
-    publishDir "${params.outdir}", mode: 'copy'
-
-    when:
-    !params.skipMultiQC
-    
-    input:
-    val qc_val from multiqc_done.count()
-
-    output:
-    file "index.html"
-
-    script:
-    """
-    create.index.r "$baseDir/docs/index.Rmd" "${params.parent_path}/${params.outdir}"
-    """
-}
-
 
 /*
- * STEP 17 - Output Description HTML
+ * STEP 16 - Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: 'copy'
