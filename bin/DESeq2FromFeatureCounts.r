@@ -125,7 +125,7 @@ if(file.exists(design) && file.exists(counts)){
     WriteXLS(data, file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.diff.xls")))
     metadata <- as.data.frame(res@elementMetadata)
     WriteXLS(metadata, file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.metadata.xls")))
-    pdf(file.path(paste0(names(contrasts)[.id], ".pvalue.dist.pdf")))
+    pdf(file.path(pf, paste0(names(contrasts)[.id], ".pvalue.dist.pdf")))
     hist(data$pvalue, breaks = 50)
     dev.off()
     pdf(file.path(pf, paste0(names(contrasts)[.id], ".MAplot.pdf")))
