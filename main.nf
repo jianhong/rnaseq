@@ -355,6 +355,8 @@ if (params.readPaths) {
         .into { raw_reads_fastqc; raw_reads_trimgalore }
 }
 
+ch_design_file = file($params.design, checkIfExists: true)
+
 // Header log info
 log.info nfcoreHeader()
 def summary = [:]
@@ -1434,6 +1436,7 @@ if (!params.skipAlignment) {
 
       input:
       file input_files from featureCounts_to_merge.collect()
+      file design_file from ch_design_file
 
       output:
       file "*" into featurecounts_merged
@@ -1448,7 +1451,7 @@ if (!params.skipAlignment) {
         "<(tail -n +2 ${filename} | sed 's:.sorted.bam::' | cut -f8)"}.join(" ")
       """
       paste $gene_ids $counts > merged_gene_counts.txt
-      DESeq2FromFeatureCounts.r ${params.species} ${params.design} merged_gene_counts.txt
+      DESeq2FromFeatureCounts.r ${params.species} ${design_file} merged_gene_counts.txt
       """
   }
 
