@@ -122,22 +122,22 @@ if(file.exists(design) && file.exists(counts)){
                   log2FoldChangeWithoutShrink=res.raw$log2FoldChange,
                   as.data.frame(res), counts, rld)
     if(length(fpkm)>0) data <- cbind(data, fpkm)
-    WriteXLS(data, paste0(pf, ".DESeq2.featureCounts.diff.xls"))
+    WriteXLS(data, file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.diff.xls")))
     metadata <- as.data.frame(res@elementMetadata)
-    WriteXLS(metadata, paste0(pf, ".DESeq2.featureCounts.metadata.xls"))
-    pdf(paste0(pf, ".pvalue.dist.pdf"))
+    WriteXLS(metadata, file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.metadata.xls")))
+    pdf(file.path(paste0(names(contrasts)[.id], ".pvalue.dist.pdf")))
     hist(data$pvalue, breaks = 50)
     dev.off()
-    pdf(paste0(pf, ".MAplot.pdf"))
+    pdf(file.path(pf, paste0(names(contrasts)[.id], ".MAplot.pdf")))
     plotMA(res)
     dev.off()
     data.s <- data[!is.na(data$padj), ]
     data.s <- data.s[data.s$padj < 0.05, ]
-    WriteXLS(data.s, paste0(pf, ".DESeq2.featureCounts.diff.fdr.0.05.xls"))
+    WriteXLS(data.s, file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.diff.fdr.0.05.xls")))
     data.s <- data.s[data.s$padj < 0.05 & abs(data.s$log2FoldChangeWithoutShrink)>1, ]
-    WriteXLS(data.s, paste0(pf, ".DESeq2.featureCounts.diff.fdr.0.05.lfc.1.xls"))
+    WriteXLS(data.s, file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.diff.fdr.0.05.lfc.1.xls")))
     
-    pdf(paste0(pf, ".DESeq2.featureCounts.volcanonPlot.pdf"), width=9, height=6)
+    pdf(file.path(pf, paste0(names(contrasts)[.id], ".DESeq2.featureCounts.volcanonPlot.pdf")), width=9, height=6)
     EnhancedVolcano(data[, c("gene", "log2FoldChangeWithoutShrink", "padj")], lab = data$gene, x='log2FoldChangeWithoutShrink', y='padj',
                     title = metadata[4, 2],
                     titleLabSize = 12,
@@ -163,7 +163,7 @@ if(file.exists(design) && file.exists(counts)){
         )
       })
       null <- mapply(ego, names(ego), FUN=function(.ele, .name){
-        write.csv(.ele, paste0(pf, paste0("GO.", .name, ".enrichment.csv")))
+        write.csv(.ele, file.path(pf, paste0(names(contrasts)[.id], paste0("GO.", .name, ".enrichment.csv"))))
         
         .ele <- as.data.frame(.ele)
         if(nrow(.ele)>1){
@@ -177,7 +177,7 @@ if(file.exists(design) && file.exists(counts)){
             geom_text(vjust=-.1) +
             xlab("") + ylab("-log10(p-value)") +
             theme_classic() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
-          ggsave(paste0(pf, paste(".GO.", .name, ".enrichment.top.pdf", sep = ".")), width = 6, height = 6)
+          ggsave(file.path(pf, paste0(names(contrasts)[.id], paste(".GO.", .name, ".enrichment.top.pdf", sep = "."))), width = 6, height = 6)
         }
       })
       
@@ -188,7 +188,7 @@ if(file.exists(design) && file.exists(counts)){
       symbol <- lapply(eid, function(.ele) gene.df[match(.ele, gene.df$ENTREZID), "SYMBOL"])
       symbol <- sapply(symbol, paste, collapse="/")
       kk$geneSYM <- symbol
-      write.csv(kk, file.path(pf, "KEGGenrichment.csv"))
+      write.csv(kk, file.path(pf, paste0(names(contrasts)[.id], ".KEGGenrichment.csv")))
     }
     tryCatch({
       if(orgShort(organism)!="hsapiens"){
@@ -209,7 +209,7 @@ if(file.exists(design) && file.exists(counts)){
         rnk <- rnk[!is.na(rnk$hsapiens_homolog_associated_gene_name), ]
         rnk <- rnk[rnk$hsapiens_homolog_associated_gene_name!="", ]
         rnk <- rnk[, c("hsapiens_homolog_associated_gene_name", "stat")]
-        write.table(rnk, paste0(pf, ".gsea.rnk"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
+        write.table(rnk, file.path(pf, paste0(names(contrasts)[.id], ".gsea.rnk")), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
       }
     }, error = function(.e) message(.e))
   }
