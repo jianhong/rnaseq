@@ -75,7 +75,7 @@ if(file.exists(design) && file.exists(counts)){
                                 colData = samples,
                                 design = ~ condition)
   if("techRep" %in% colnames(samples)){
-    dds <- collapseReplicates(dds, groupby = dds$techRep)
+    dds <- collapseReplicates(dds, groupby = paste(dds$condition, dds$techRep))
   }
   dds <- DESeq(dds)
   conditions <- unique(as.character(samples$condition))
