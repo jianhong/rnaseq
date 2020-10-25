@@ -1437,6 +1437,7 @@ if (!params.skipAlignment) {
 
       output:
       file "*" into featurecounts_merged
+      path "DESeq2/*"
 
       script:
       // Redirection (the `<()`) for the win!

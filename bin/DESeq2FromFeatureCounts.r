@@ -87,7 +87,8 @@ if(file.exists(design) && file.exists(counts)){
   names(contrasts) <- sapply(contrasts, paste, collapse=".vs.")
   
   for(.id in seq_along(contrasts)){
-    pf <- names(contrasts)[.id]
+    pf <- file.path("DESeq2", names(contrasts)[.id])
+    dir.create(pf)
     contr <- contrasts[[.id]]
     contr <- contr[order(grepl("control|contr|ctl|day0|minus|neg|sham|WT",
                                contr, ignore.case = TRUE))]
