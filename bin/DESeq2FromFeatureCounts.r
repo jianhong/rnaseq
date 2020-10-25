@@ -68,7 +68,8 @@ if(file.exists(design) && file.exists(counts)){
   
   samples <- read.delim(design)
   stopifnot(!all(c("condition", "R1") %in% colnames(samples)))
-  samples <- samples[match(sub("Aligned.sortedByCoord.out.bam", "", colnames(cts)), sub("(.fastq|fq).gz", "", samples$R1)), ]
+  samples <- samples[match(sub("Aligned.sortedByCoord.out.bam", "", colnames(cts)),
+                           sub("(.fastq|fq).gz", "", basename(samples$R1))), ]
   dds <- DESeqDataSetFromMatrix(countData = cts,
                                 colData = samples,
                                 design = ~ condition)
