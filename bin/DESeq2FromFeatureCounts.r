@@ -67,17 +67,11 @@ if(file.exists(design) && file.exists(counts)){
   rownames(cts) <- anno$Geneid
   
   samples <- read.delim(design)
-  stopifnot(rownames(samples)==colnames(cts))
-  cn <- colnames(samples)
-  uniqueCn <- apply(samples, 2, FUN=function(.ele){
-    length(unique(.ele))>1
-  })
-  cn <- cn[uniqueCn]
-  cn <- cn[!cn %in% c("sampleName")]
-  fl <- as.formula(paste("~", cn, collapse = " "))
+  stopifnot(!all(c("condition", "R1") %in% colnames(samples)))
+  samples <- samples[match(sub("Aligned.sortedByCoord.out.bam", "", colnames(cts)), sub("(.fastq|fq).gz", "", samples$R1)), ]
   dds <- DESeqDataSetFromMatrix(countData = cts,
                                 colData = samples,
-                                design = fl)
+                                design = ~ condition)
   if("techRep" %in% cn){
     dds <- collapseReplicates(dds, groupby = dds$techRep)
   }
