@@ -69,11 +69,12 @@ if(file.exists(design) && file.exists(counts)){
   samples <- read.delim(design)
   stopifnot(all(c("condition", "R1") %in% colnames(samples)))
   samples <- samples[match(sub("Aligned.sortedByCoord.out.bam", "", colnames(cts)),
-                           sub("(.fastq|fq).gz", "", basename(samples$R1))), ]
+                           sub("(.fastq|fq).gz", "", basename(as.character(samples$R1)))), ]
+  rownames(samples) <- colnames(cts)
   dds <- DESeqDataSetFromMatrix(countData = cts,
                                 colData = samples,
                                 design = ~ condition)
-  if("techRep" %in% cn){
+  if("techRep" %in% colnames(samples)){
     dds <- collapseReplicates(dds, groupby = dds$techRep)
   }
   dds <- DESeq(dds)
@@ -83,7 +84,7 @@ if(file.exists(design) && file.exists(counts)){
   
   for(.id in seq_along(contrasts)){
     pf <- file.path("DESeq2", names(contrasts)[.id])
-    dir.create(pf)
+    dir.create(pf, recursive = TRUE)
     contr <- contrasts[[.id]]
     contr <- contr[order(grepl("control|contr|ctl|day0|minus|neg|sham|WT",
                                contr, ignore.case = TRUE))]
@@ -105,21 +106,22 @@ if(file.exists(design) && file.exists(counts)){
     names(rr.x) <- names(rr[eg %in% names(genes)])
     rr[eg %in% names(genes)] <- rr.x
     rowRanges(dds1) <- rr
-    fpkm <- fpkm(dds1)
+    fpkm <- NULL
+    tryCatch({fpkm <- fpkm(dds1)}, error=function(.e) message(.e))
     
     colnames(counts) <- paste0("counts.", colnames(counts))
-    colnames(fpkm) <- paste0("fpkm.", colnames(fpkm))
+    if(length(fpkm)>0) colnames(fpkm) <- paste0("fpkm.", colnames(fpkm))
     colnames(rld) <- paste0("nromlized.counts.", colnames(rld))
     
     stopifnot(identical(rownames(counts), rownames(res)))
-    stopifnot(identical(rownames(fpkm), rownames(res)))
+    if(length(fpkm)>0) stopifnot(identical(rownames(fpkm), rownames(res)))
     stopifnot(identical(rownames(rld), rownames(res)))
     stopifnot(identical(rownames(res.raw), rownames(res)))
     
     data <- cbind(gene=rownames(res),
                   log2FoldChangeWithoutShrink=res.raw$log2FoldChange,
-                  stat=res.raw$stat,
-                  as.data.frame(res), counts, fpkm, rld)
+                  as.data.frame(res), counts, rld)
+    if(length(fpkm)>0) data <- cbind(data, fpkm)
     WriteXLS(data, paste0(pf, ".DESeq2.featureCounts.diff.xls"))
     metadata <- as.data.frame(res@elementMetadata)
     WriteXLS(metadata, paste0(pf, ".DESeq2.featureCounts.metadata.xls"))
@@ -136,7 +138,7 @@ if(file.exists(design) && file.exists(counts)){
     WriteXLS(data.s, paste0(pf, ".DESeq2.featureCounts.diff.fdr.0.05.lfc.1.xls"))
     
     pdf(paste0(pf, ".DESeq2.featureCounts.volcanonPlot.pdf"), width=9, height=6)
-    EnhancedVolcano(data, lab = data$gene, x='log2FoldChange', y='padj',
+    EnhancedVolcano(data[, c("gene", "log2FoldChangeWithoutShrink", "padj")], lab = data$gene, x='log2FoldChangeWithoutShrink', y='padj',
                     title = metadata[4, 2],
                     titleLabSize = 12,
                     subtitle = NULL,
