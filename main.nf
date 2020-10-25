@@ -355,7 +355,7 @@ if (params.readPaths) {
         .into { raw_reads_fastqc; raw_reads_trimgalore }
 }
 
-ch_design_file = file($params.design, checkIfExists: true)
+ch_design_file = file(params.design, checkIfExists: true)
 
 // Header log info
 log.info nfcoreHeader()
