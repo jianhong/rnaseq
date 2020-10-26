@@ -849,9 +849,9 @@ process fastqc {
 
     script:
     """
-    touch md5.${reads.getSimpleName}.txt
-    gunzip -c $f > ${reads.getSimpleName}
-    ${params.md5sum} ${reads.getSimpleName} >>md5.${reads.getSimpleName}.txt
+    touch md5.${reads.getSimpleName()}.txt
+    gunzip -c $f > ${reads.getSimpleName()}
+    ${params.md5sum} ${reads.getSimpleName()} >>md5.${reads.getSimpleName()}.txt
     fastqc --quiet --threads $task.cpus $reads
     """
 }
