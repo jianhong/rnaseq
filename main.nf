@@ -1782,6 +1782,7 @@ process index_documentation {
     path designtab from ch_design_file
     path checksum from ch_checksum.collect().ifEmpty([])
     file workflow_summary from create_workflow_summary(summary)
+    file ('software_versions/*') from software_versions_yaml.collect()
     
     output:
     path 'index.html'
