@@ -1430,7 +1430,7 @@ if (!params.skipAlignment) {
    * STEP 10 - Merge featurecounts and do differential analysis
    */
   process merge_featureCounts {
-      errorStrategy { task.attempt <= 2 ? 'retry' : 'ignore' }
+      errorStrategy 'ignore'
       label "mid_memory"
       tag "${input_files[0].baseName - '.sorted'}"
       publishDir "${params.outdir}/featureCounts", mode: 'copy'
@@ -1452,6 +1452,7 @@ if (!params.skipAlignment) {
         "<(tail -n +2 ${filename} | sed 's:.sorted.bam::' | cut -f8)"}.join(" ")
       """
       paste $gene_ids $counts > merged_gene_counts.txt
+      mkdir DESeq2
       DESeq2FromFeatureCounts.r ${params.species} ${design_file} merged_gene_counts.txt
       """
   }
