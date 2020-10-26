@@ -851,8 +851,7 @@ process fastqc {
     """
     for f in $reads
     do
-        name=`basename $f`
-        name="${name%.*}"
+        name="${name.getSimpleName}"
         touch md5.${name}.txt
         gunzip -c $f > ${name}
         ${params.md5sum} ${name} >>md5.${name}.txt
