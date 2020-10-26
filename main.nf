@@ -330,6 +330,9 @@ if (workflow.profile == 'awsbatch') {
 // Stage config files
 ch_multiqc_config = file(params.multiqc_config, checkIfExists: true)
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
+ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
+ch_index_docs = file("$baseDir/docs/index.Rmd", checkIfExists: true)
+ch_design_file = file(params.design, checkIfExists: true)
 
 /*
  * Create a channel for input read files
@@ -354,8 +357,6 @@ if (params.readPaths) {
         .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
         .into { raw_reads_fastqc; raw_reads_trimgalore }
 }
-
-ch_design_file = file(params.design, checkIfExists: true)
 
 // Header log info
 log.info nfcoreHeader()
@@ -844,10 +845,19 @@ process fastqc {
 
     output:
     file "*_fastqc.{zip,html}" into fastqc_results
+    path 'md5.*.txt' into ch_checksum
 
     script:
     """
     fastqc --quiet --threads $task.cpus $reads
+    for f in $reads
+    do
+        name=`basename $f`
+        name="${name%.*}"
+        touch md5.${name}.txt
+        gunzip -c $f > ${name}
+        ${params.md5sum} ${name} >>md5.${name}.txt
+    done
     """
 }
 
@@ -1696,7 +1706,7 @@ process multiqc {
     output:
     file "*multiqc_report.html" into multiqc_report, multiqc_done
     file "*_data"
-    file "multiqc_plots"
+    file "multiqc_plots" into ch_multiqc_plots
 
     script:
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
@@ -1736,6 +1746,7 @@ process createBigWig {
 }
 
 
+
 /*
  * STEP 16 - Output Description HTML
  */
@@ -1744,6 +1755,7 @@ process output_documentation {
 
     input:
     file output_docs from ch_output_docs
+    path images from ch_output_docs_images
 
     output:
     file "results_description.html"
@@ -1754,6 +1766,32 @@ process output_documentation {
     """
 }
 
+/*
+ * STEP 18: Output index HTML
+ */
+process index_documentation {
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    
+    when:
+    !params.skip_multiqc
+    
+    input:
+    path index_docs from ch_index_docs
+    path images from ch_multiqc_plots
+    path doc_img from ch_output_docs_images
+    path designtab from ch_design_file
+    path checksum from ch_checksum.collect().ifEmpty([])
+    file workflow_summary from create_workflow_summary(summary)
+    
+    output:
+    path 'index.html'
+
+    script:
+    """
+    cp ${index_docs} new.rmd
+    Rscript -e "rmarkdown::render('new.rmd', output_file='index.html', params = list(design='${designtab}', genome='${params.genome}', summary='${workflow_summary}'))"
+    """
+}
 
 
 /*
