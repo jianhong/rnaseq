@@ -849,7 +849,6 @@ process fastqc {
 
     script:
     """
-    fastqc --quiet --threads $task.cpus $reads
     for f in $reads
     do
         name=`basename $f`
@@ -858,6 +857,7 @@ process fastqc {
         gunzip -c $f > ${name}
         ${params.md5sum} ${name} >>md5.${name}.txt
     done
+    fastqc --quiet --threads $task.cpus $reads
     """
 }
 

@@ -23,7 +23,7 @@ library(yaml)
 
 # ![nf-core/rnaseq](images/nf-core-rnaseq_logo.png)
 
-This document describes the output produced by the pipeline. Most of the plots are taken from the [MultiQC report](`r cat(file.path("multiqc", $params$peaktype), "multiqc_report.html"))`), which summaries results at the end of the pipeline.
+This document describes the output produced by the pipeline. Most of the plots are taken from the [MultiQC report]("multiqc/multiqc_report.html"), which summaries results at the end of the pipeline.
 
 ## Experiment design
 
@@ -334,7 +334,7 @@ The checksums listed here is the checksum for un-compresed fastq files.
 ```{r}
 f <- dir(".", "md5.*.txt")
 d <- unlist(lapply(f, readLines))
-data <- do.call(rbind, strsplit(f, " "))
+data <- do.call(rbind, strsplit(d, "\\s+"))
 datatable(data)
 ```
 
