@@ -1524,7 +1524,7 @@ if (!params.skipAlignment) {
       file heatmap_header from ch_heatmap_header
 
       output:
-      file "*.{txt,pdf,csv,png}" into sample_correlation_results
+      file "*.{txt,pdf,csv,png}" into sample_correlation_results, sample_correlation_results_index
 
       when:
       num_bams > 2 && (!params.sampleLevel)
@@ -1547,6 +1547,7 @@ if (!params.skipAlignment) {
   rseqc_results = Channel.from(false)
   qualimap_results = Channel.from(false)
   sample_correlation_results = Channel.from(false)
+  sample_correlation_results_index = Channel.from(false)
   featureCounts_logs = Channel.from(false)
   dupradar_results = Channel.from(false)
   preseq_results = Channel.from(false)
@@ -1796,7 +1797,7 @@ process index_documentation {
     path checksum from ch_checksum.collect().ifEmpty([])
     file workflow_summary from create_workflow_summary(summary)
     file ('software_versions/*') from software_versions_yaml.collect()
-    file ('sample_correlation_results/*') from sample_correlation_results.collect().ifEmpty([]) // If the Edge-R is not run create an Empty array
+    file ('sample_correlation_results/*') from sample_correlation_results_index.collect().ifEmpty([]) // If the Edge-R is not run create an Empty array
     
     output:
     path 'index.html'
