@@ -224,11 +224,11 @@ StringTie outputs FPKM metrics for genes and transcripts as well as the transcri
 
 **Heatmap:**
 
-![heatmap](images/mqc_hcplot_hocmzpdjsq.png)
+![heatmap](`r ifelse(file.exists("sample_correlation_results/log2CPM_sample_correlation_heatmap.png"), "sample_correlation_results/log2CPM_sample_correlation_heatmap.png", "images/mqc_hcplot_hocmzpdjsq.png")`)
 
 **MDS plot:**
 
-![mds_plot](images/mqc_hcplot_ltqchiyxfz.png)
+![mds_plot](`r ifelse(file.exists("sample_correlation_results/edgeR_MDS_plot.png"), "sample_correlation_results/edgeR_MDS_plot.png", "images/mqc_hcplot_ltqchiyxfz.png")`)
 
 **Output directory: `results/sample_correlation`**
 

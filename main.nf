@@ -1524,7 +1524,7 @@ if (!params.skipAlignment) {
       file heatmap_header from ch_heatmap_header
 
       output:
-      file "*.{txt,pdf,csv}" into sample_correlation_results
+      file "*.{txt,pdf,csv,png}" into sample_correlation_results
 
       when:
       num_bams > 2 && (!params.sampleLevel)
@@ -1796,6 +1796,7 @@ process index_documentation {
     path checksum from ch_checksum.collect().ifEmpty([])
     file workflow_summary from create_workflow_summary(summary)
     file ('software_versions/*') from software_versions_yaml.collect()
+    file ('sample_correlation_results/*') from sample_correlation_results.collect().ifEmpty([]) // If the Edge-R is not run create an Empty array
     
     output:
     path 'index.html'

@@ -52,6 +52,9 @@ dataDGE <- DGEList( counts=data.matrix(data) )
 dataNorm <- calcNormFactors(dataDGE)
 
 # Make MDS plot
+png('edgeR_MDS_plot.png')
+plotMDS(dataNorm)
+dev.off()
 pdf('edgeR_MDS_plot.pdf')
 MDSdata <- plotMDS(dataNorm)
 dev.off()
@@ -69,6 +72,12 @@ logcpm <- cpm(dataNorm, prior.count=2, log=TRUE)
 
 # Calculate the Pearsons correlation between samples
 # Plot a heatmap of correlations
+png('log2CPM_sample_correlation_heatmap.png')
+heatmap.2(as.matrix(cor(logcpm, method="pearson")),
+                  key.title="Pearson's Correlation", trace="none",
+                  dendrogram="row", margin=c(9, 9)
+)
+dev.off()
 pdf('log2CPM_sample_correlation_heatmap.pdf')
 hmap <- heatmap.2(as.matrix(cor(logcpm, method="pearson")),
   key.title="Pearson's Correlation", trace="none",
