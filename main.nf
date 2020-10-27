@@ -1754,7 +1754,7 @@ process IGV {
 
     script: // scripts are bundled with the pipeline in nf-core/chipseq/bin/
     """
-    echo bigwigs.collect{it.toString()}.sort().join('\n')} > igv_files.txt
+    echo ${bigwigs.collect{it.toString()}.sort().join('\n')} > igv_files.txt
     igv_files_to_session.py igv_session.xml igv_files.txt ${params.species} --path_prefix '../'
     """
 }
