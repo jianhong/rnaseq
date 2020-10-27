@@ -33,7 +33,7 @@ cat(data$data, sep = "\n")
 ```
 
 ### Design table
-```{r}
+```{r, echo=FALSE}
 data <- read.delim(params$design)
 datatable(data)
 ```

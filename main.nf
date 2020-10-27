@@ -1458,7 +1458,7 @@ if (!params.skipAlignment) {
       """
       paste $gene_ids $counts > merged_gene_counts.txt
       mkdir DESeq2
-      DESeq2FromFeatureCounts.r ${params.species} ${design_file} merged_gene_counts.txt
+      DESeq2FromFeatureCounts.r $params.species ${design_file} merged_gene_counts.txt
       """
   }
 
