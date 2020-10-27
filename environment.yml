@@ -2,6 +2,7 @@
 #   conda env create -f environment.yml
 name: nf-core-rnaseq-1.4.2
 channels:
+  - r
   - conda-forge
   - bioconda
   - defaults
@@ -26,6 +27,7 @@ dependencies:
   - r-writexls=5.0.0
   - r-scales=1.1.1
   - r-rmarkdown=2.3
+  - r::r-dt=0.16
   - deeptools=3.3.1
   - fastqc=0.11.8
   - gffread=0.11.4

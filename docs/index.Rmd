@@ -332,8 +332,10 @@ datatable(pkgs)
 ```{r, results = 'asis', echo=FALSE}
 files <- dir("software_versions", "yaml", full.names = TRUE)
 for(i in files){
-data <- yaml::yaml.load_file(i)
-cat(gsub("\\s+", "", data$data), sep = "\n")
+  data <- yaml::yaml.load_file(i)
+  data <- strsplit(data$data, "\n")[[1]]
+  data <- data[gsub("\\s+", "", data)!=""]
+  cat(data, sep = "\n")
 }
 ```
 
