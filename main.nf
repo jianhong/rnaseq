@@ -1747,14 +1747,14 @@ process IGV {
     publishDir "${params.outdir}/igv", mode: params.publish_dir_mode
 
     input:
-    path bigwigs from ch_bigwig_igv.ifEmpty([])
+    path bigwigs from ch_bigwig_igv.collect().ifEmpty([])
 
     output:
     path '*.{txt,xml}'
 
     script: // scripts are bundled with the pipeline in nf-core/chipseq/bin/
     """
-    echo ${bigwigs.collect{it.toString()}.sort().join('\n')} > igv_files.txt
+    echo "${bigwigs.collect{it.toString()}.sort().join('\t0,0,0\n')}" > igv_files.txt
     igv_files_to_session.py igv_session.xml igv_files.txt ${params.species} --path_prefix '../'
     """
 }
