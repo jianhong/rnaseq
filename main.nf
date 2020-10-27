@@ -1729,7 +1729,7 @@ process createBigWig {
     file bam from bam_bigwig
 
     output:
-    file "${bam.baseName}.norm.CPM.bw" 
+    file "${bam.baseName}.norm.CPM.bw" into ch_bigwig_igv
 
     script:
     """
@@ -1740,10 +1740,28 @@ process createBigWig {
     """
 }
 
+/*
+ * STEP 16: Create IGV session file
+ */
+process IGV {
+    publishDir "${params.outdir}/igv", mode: params.publish_dir_mode
+
+    input:
+    path bigwigs from ch_bigwig_igv.ifEmpty([])
+
+    output:
+    path '*.{txt,xml}'
+
+    script: // scripts are bundled with the pipeline in nf-core/chipseq/bin/
+    """
+    echo bigwigs.collect{it.toString()}.sort().join('\n')} > igv_files.txt
+    igv_files_to_session.py igv_session.xml igv_files.txt ${params.species} --path_prefix '../'
+    """
+}
 
 
 /*
- * STEP 16 - Output Description HTML
+ * STEP 17 - Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: 'copy'
