@@ -1783,7 +1783,7 @@ process output_documentation {
  * STEP 18: Output index HTML
  */
 process index_documentation {
-    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    publishDir "${params.outdir}", mode: 'copy'
     
     when:
     !params.skip_multiqc
