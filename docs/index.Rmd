@@ -34,7 +34,7 @@ cat(data$data, sep = "\n")
 
 ### Design table
 ```{r}
-data <- read.csv(params$design)
+data <- read.delim(params$design)
 datatable(data)
 ```
 
@@ -268,6 +268,7 @@ For more information about how to use MultiQC reports, see [http://multiqc.info]
 * `featureCounts - DE analysis from featureCounts results`
 
 **Details:**
+
 * pvalue.dist.pdf - pvalue histogram for all the features
 * DESeq2.xxxx.metadata.xls - metadata for DE analysis
 * DESeq2.xxxx.diff.xls - full list of DE analysis results
@@ -281,7 +282,7 @@ For more information about how to use MultiQC reports, see [http://multiqc.info]
   * KEGGenrichment.csv - KEGG enrichment results
   * pathview - plots of enriched pathway
 
-### Create IGV session file
+## Create IGV session file
 
 <details markdown="1">
     <summary>Output files</summary>
@@ -304,7 +305,7 @@ Once installed, open IGV, go to `File > Open Session` and select the `igv_sessio
 
 > **NB:** If you are not using an in-built genome provided by IGV you will need to load the annotation yourself e.g. in .gtf and/or .bed format.
 
-### Pipeline information
+## Pipeline information
 
 <details markdown="1">
     <summary>Output files</summary>
@@ -319,7 +320,7 @@ Once installed, open IGV, go to `File > Open Session` and select the `igv_sessio
 
 [Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to trouble-shoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
 
-### Package information
+## Package information
 
 ```{r, echo=FALSE}
 pkgs <- installed.packages()
@@ -327,7 +328,7 @@ datatable(pkgs)
 ```
 
 
-### software_versions
+## software_versions
 
 ```{r, results = 'asis', echo=FALSE}
 files <- dir("software_versions", "yaml", full.names = TRUE)
@@ -339,7 +340,7 @@ for(i in files){
 }
 ```
 
-### MD5 checksum
+## MD5 checksum
 
 MD5 checksum is required for [Gene Expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/info/submission.html) submission. 
 The checksums listed here is the checksum for un-compresed fastq files.
