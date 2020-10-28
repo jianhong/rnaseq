@@ -5,27 +5,20 @@ args = commandArgs(trailingOnly=TRUE)
 if (length(args) < 3) {
   stop("Usage: DESeq2FromFeatureCounts.r <species> <design table> <featureCounts table file>", call.=FALSE)
 }
-species <- args[1]
+gtf <- args[1]
 design <- args[2]
 counts <- args[3]
 
 # Debug messages (stderr)
-message("Input species  (Arg 1): ", species)
+message("Input gtf  (Arg 1): ", gtf)
 message("Input design   (Arg 2): ", design)
 message("Input counts   (Arg 3): ", counts)
 
-if(file.exists(design) && file.exists(counts)){
+if(file.exists(design) && file.exists(counts) && file.exists(gtf)){
   # Load / install packages
   if(!require("BiocManager")){
     install.packages("BiocManager", suppressUpdates=TRUE)
   }
-  
-  pkgs <- BiocManager::available("^TxDb")
-  TxDb <- pkgs[grepl(paste0("^TxDb.*?", species), pkgs)]
-  if(any(grepl("knownGene", TxDb))){
-    TxDb <- TxDb[grepl("knownGene", TxDb)][1]
-  }
-  TxDb
   askPkg <- function(pkg){
     if (!require(pkg, character.only = TRUE)){
       install(pkg, suppressUpdates=TRUE)
@@ -47,19 +40,14 @@ if(file.exists(design) && file.exists(counts)){
     strs <- sapply(strs, shortStr, len=len)
     make.unique(strs)
   }
-  orgShort <- function(organism){
-    x <- strsplit(tolower(organism), " ")[[1]]
-    paste0(substr(x[1], start = 1, stop = 1), x[2])
-  }
   for(pkg in c("ChIPpeakAnno", "DESeq2", "WriteXLS", "clusterProfiler", "scales",
-               "EnhancedVolcano", TxDb)){
+               "EnhancedVolcano", "GenomicFeatures", "rtracklayer")){
     askPkg(pkg)
   }
   
-  txdb <- get(TxDb)
-  organism <- organism(txdb)
-  (org <- ChIPpeakAnno::egOrgMap(organism))
-  askPkg(org)
+  library()
+  txdb <- makeTxDbFromGFF(gtf)
+  gtf <- import(gtf)
   
   cts <- read.delim(counts, comment.char = "#", stringsAsFactors = FALSE)
   anno <- cts[, !grepl("bam$", colnames(cts))]
@@ -95,19 +83,13 @@ if(file.exists(design) && file.exists(counts)){
     counts <- counts(dds1)
     rld <- counts(dds1, normalized=TRUE)
     
-    genes <- exonsBy(txdb, by="gene")
-    rr <- rowRanges(dds1)
-    dbExt <- ifelse(grepl("^ENS", names(rr)), "ENSEMBL2EG", "ALIAS2EG")
-    dbExt <- sort(table(dbExt), decreasing=TRUE)
-    dbExt <- names(dbExt)[1]
-    eg <- ChIPpeakAnno::xget(names(rr), get(sub(".db", dbExt, org)), output = "first")
-    eg[is.na(eg)] <- "NA"
-    rr.x <- genes[eg[eg %in% names(genes)]]
-    names(rr.x) <- names(rr[eg %in% names(genes)])
-    rr[eg %in% names(genes)] <- rr.x
-    rowRanges(dds1) <- rr
     fpkm <- NULL
-    tryCatch({fpkm <- fpkm(dds1)}, error=function(.e) message(.e))
+    tryCatch({
+      genes <- exonsBy(txdb, by="gene")
+      rr <- rowRanges(dds1)
+      rowRanges(dds1) <- genes[names(rr)]
+      fpkm <- fpkm(dds1)
+      }, error=function(.e) message(.e))
     
     colnames(counts) <- paste0("counts.", colnames(counts))
     if(length(fpkm)>0) colnames(fpkm) <- paste0("fpkm.", colnames(fpkm))
@@ -149,69 +131,6 @@ if(file.exists(design) && file.exists(counts)){
                     labSize = 1.0,
                     legendPosition = 'right')
     dev.off()
-    
-    gene.df <- bitr(data.s$gene,
-                    fromType=ifelse(grepl("^ENS", as.character(data.s$gene)[1]),
-                                    "ENSEMBL", "SYMBOL"),
-                    toType = "ENTREZID", OrgDb = org)
-    if(nrow(gene.df)>1){
-      ego <- sapply(c("BP", "MF", "CC"), function(.onto){
-        enrichGO(  gene = gene.df$ENTREZID,
-                   OrgDb = org,
-                   ont = .onto,
-                   readable = TRUE
-        )
-      })
-      null <- mapply(ego, names(ego), FUN=function(.ele, .name){
-        write.csv(.ele, file.path(pf, paste0(names(contrasts)[.id], paste0("GO.", .name, ".enrichment.csv"))))
-        
-        .ele <- as.data.frame(.ele)
-        if(nrow(.ele)>1){
-          .ele$qvalue <- -log10(.ele$p.adjust)
-          plotdata <- .ele[!is.na(.ele$qvalue), c("Description", "qvalue", "Count")]
-          if(nrow(plotdata)>20) plotdata <- plotdata[1:20, ]
-          plotdata$Description <- shortStrs(plotdata$Description)
-          ggplot(plotdata, aes(x=reorder(Description, -qvalue), y=qvalue, fill=Count, label=Count)) +
-            scale_fill_gradient2(low = muted("blue"), high = muted("red"), oob = scales::squish) +
-            geom_bar(stat="identity") + scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-            geom_text(vjust=-.1) +
-            xlab("") + ylab("-log10(p-value)") +
-            theme_classic() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
-          ggsave(file.path(pf, paste0(names(contrasts)[.id], paste(".GO.", .name, ".enrichment.top.pdf", sep = "."))), width = 6, height = 6)
-        }
-      })
-      
-      kk <- enrichKEGG(gene = gene.df$ENTREZID, 
-                       organism = substr(orgShort(organism), start = 1, stop = 3))
-      kk <- as.data.frame(kk)
-      eid <- strsplit(kk$geneID, "\\/")
-      symbol <- lapply(eid, function(.ele) gene.df[match(.ele, gene.df$ENTREZID), "SYMBOL"])
-      symbol <- sapply(symbol, paste, collapse="/")
-      kk$geneSYM <- symbol
-      write.csv(kk, file.path(pf, paste0(names(contrasts)[.id], ".KEGGenrichment.csv")))
-    }
-    tryCatch({
-      if(orgShort(organism)!="hsapiens"){
-        askPkg("biomaRt")
-        mart <- useMart('ensembl', dataset = paste0(orgShort(organism), "_gene_ensembl"))
-        homologs <- getBM(attributes = c("ensembl_gene_id", 
-                                         "hsapiens_homolog_ensembl_gene", 
-                                         "hsapiens_homolog_associated_gene_name"),
-                          filters = "ensembl_gene_id",
-                          values = data$gene,
-                          mart = mart)
-        homologs <- homologs[match(data$gene, homologs$ensembl_gene_id), 
-                             c("hsapiens_homolog_ensembl_gene", "hsapiens_homolog_associated_gene_name")]
-        data <- cbind(data, homologs)
-        
-        rnk <- data[order(data$stat, decreasing = TRUE), ]
-        rnk <- rnk[!is.na(rnk$pvalue), ]
-        rnk <- rnk[!is.na(rnk$hsapiens_homolog_associated_gene_name), ]
-        rnk <- rnk[rnk$hsapiens_homolog_associated_gene_name!="", ]
-        rnk <- rnk[, c("hsapiens_homolog_associated_gene_name", "stat")]
-        write.table(rnk, file.path(pf, paste0(names(contrasts)[.id], ".gsea.rnk")), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
-      }
-    }, error = function(.e) message(.e))
   }
   
 }

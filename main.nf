@@ -272,7 +272,7 @@ if (params.gtf) {
         .fromPath(params.gtf, checkIfExists: true)
         .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
         .into { gtf_makeSTARindex; gtf_makeHisatSplicesites; gtf_makeHISATindex; gtf_makeSalmonIndex; gtf_makeBED12;
-                gtf_star; gtf_dupradar; gtf_qualimap;  gtf_featureCounts; gtf_stringtieFPKM; gtf_salmon; gtf_salmon_merge }
+                gtf_star; gtf_dupradar; gtf_qualimap;  gtf_featureCounts; gtf_stringtieFPKM; gtf_salmon; gtf_salmon_merge; gtf_deseq }
 
   }
   } else if (params.gff) {
@@ -515,7 +515,7 @@ if (compressedReference) {
 
         output:
         file "${gz.baseName}" into gtf_makeSTARindex, gtf_makeHisatSplicesites, gtf_makeHISATindex, gtf_makeSalmonIndex, gtf_makeBED12,
-                                        gtf_star, gtf_dupradar, gtf_featureCounts, gtf_stringtieFPKM, gtf_salmon, gtf_salmon_merge, gtf_qualimap
+                                        gtf_star, gtf_dupradar, gtf_featureCounts, gtf_stringtieFPKM, gtf_salmon, gtf_salmon_merge, gtf_qualimap, gtf_deseq
 
         script:
         """
@@ -650,7 +650,7 @@ if (params.gff && !params.gtf) {
 
         output:
         file "${gff.baseName}.gtf" into gtf_makeSTARindex, gtf_makeHisatSplicesites, gtf_makeHISATindex, gtf_makeSalmonIndex, gtf_makeBED12,
-                                        gtf_star, gtf_dupradar, gtf_featureCounts, gtf_stringtieFPKM, gtf_salmon, gtf_salmon_merge, gtf_qualimap
+                                        gtf_star, gtf_dupradar, gtf_featureCounts, gtf_stringtieFPKM, gtf_salmon, gtf_salmon_merge, gtf_qualimap, gtf_deseq
 
         script:
         """
@@ -1443,6 +1443,7 @@ if (!params.skipAlignment) {
       input:
       file input_files from featureCounts_to_merge.collect()
       file design_file from ch_design_file
+      file gtf_file from gtf_deseq
 
       output:
       file "*" into featurecounts_merged
@@ -1458,7 +1459,7 @@ if (!params.skipAlignment) {
       """
       paste $gene_ids $counts > merged_gene_counts.txt
       mkdir DESeq2
-      DESeq2FromFeatureCounts.r $params.species ${design_file} merged_gene_counts.txt
+      DESeq2FromFeatureCounts.r ${gtf_file} ${design_file} merged_gene_counts.txt
       """
   }
 
