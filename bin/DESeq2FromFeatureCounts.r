@@ -45,7 +45,6 @@ if(file.exists(design) && file.exists(counts) && file.exists(gtf)){
     askPkg(pkg)
   }
   
-  library()
   txdb <- makeTxDbFromGFF(gtf)
   gtf <- import(gtf)
   
