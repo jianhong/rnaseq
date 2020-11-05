@@ -1053,7 +1053,7 @@ if (!params.skipAlignment) {
           file "*Log.out" into star_log
           file "where_are_my_files.txt"
           file "*Unmapped*" optional true
-          file "${prefix}Aligned.sortedByCoord.out.bam.bai" into bam_index_rseqc, bam_index_genebody
+          file "${name}Aligned.sortedByCoord.out.bam.bai" into bam_index_rseqc, bam_index_genebody
 
           script:
           prefix = reads[0].toString() - ~/(_R1)?(_trimmed)?(_val_1)?(\.fq)?(\.fastq)?(\.gz)?$/
@@ -1071,9 +1071,9 @@ if (!params.skipAlignment) {
               --outSAMtype BAM SortedByCoordinate $avail_mem \\
               --readFilesCommand zcat \\
               --runDirPerm All_RWX $unaligned \\
-              --outFileNamePrefix $prefix $seq_center
+              --outFileNamePrefix ${name} $seq_center
 
-          samtools index ${prefix}Aligned.sortedByCoord.out.bam
+          samtools index ${name}Aligned.sortedByCoord.out.bam
           """
       }
       // Filter removes all 'aligned' channels that fail the check
@@ -1107,8 +1107,8 @@ if (!params.skipAlignment) {
           file wherearemyfiles from ch_where_hisat2.collect()
 
           output:
-          file "${prefix}.bam" into hisat2_bam
-          file "${prefix}.hisat2_summary.txt" into alignment_logs
+          file "${name}.bam" into hisat2_bam
+          file "${name}.hisat2_summary.txt" into alignment_logs
           file "where_are_my_files.txt"
           file "unmapped.hisat2*" optional true
 
@@ -1134,8 +1134,8 @@ if (!params.skipAlignment) {
                      --met-stderr \\
                      --new-summary \\
                      --dta \\
-                     --summary-file ${prefix}.hisat2_summary.txt $seq_center \\
-                     | samtools view -bS -F 4 -F 256 - > ${prefix}.bam
+                     --summary-file ${name}.hisat2_summary.txt $seq_center \\
+                     | samtools view -bS -F 4 -F 256 - > ${name}.bam
               """
           } else {
               unaligned = params.saveUnaligned ? "--un-conc-gz unmapped.hisat2.gz" : ''
@@ -1150,8 +1150,8 @@ if (!params.skipAlignment) {
                      -p ${task.cpus} $unaligned\\
                      --met-stderr \\
                      --new-summary \\
-                     --summary-file ${prefix}.hisat2_summary.txt $seq_center \\
-                     | samtools view -bS -F 4 -F 8 -F 256 - > ${prefix}.bam
+                     --summary-file ${name}.hisat2_summary.txt $seq_center \\
+                     | samtools view -bS -F 4 -F 8 -F 256 - > ${name}.bam
               """
           }
       }
