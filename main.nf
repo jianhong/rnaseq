@@ -1753,11 +1753,13 @@ process IGV {
 
     output:
     path '*.{txt,xml}'
+    path 'trackhub/*'
 
     script: // scripts are bundled with the pipeline in nf-core/chipseq/bin/
     """
     echo "${bigwigs.collect{it.toString()+'\t0,0,0'}.sort().join('\n')}" > igv_files.txt
     igv_files_to_session.py igv_session.xml igv_files.txt ${params.species} --path_prefix '../'
+    create_trackhub.py trackhub igv_files.txt $params.species $params.email --path_prefix '../'
     """
 }
 
