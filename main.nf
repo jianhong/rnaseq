@@ -1759,7 +1759,7 @@ process IGV {
     """
     echo "${bigwigs.collect{it.toString()+'\t0,0,0'}.sort().join('\n')}" > igv_files.txt
     igv_files_to_session.py igv_session.xml igv_files.txt ${params.species} --path_prefix '../'
-    create_trackhub.py trackhub igv_files.txt $params.species $params.email --path_prefix '../'
+    create_trackhub.py trackhub igv_files.txt $params.species $params.email --path_prefix '../../../'
     """
 }
 
