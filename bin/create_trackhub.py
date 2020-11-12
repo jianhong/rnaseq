@@ -98,7 +98,7 @@ def create_trackhub(OutFolder,ListFile,Genome,EMAIL,PathPrefix=''):
           pass
         elif extension in TrackType.keys():
           track = trackhub.Track(
-            name=trackhub.helpers.sanitize(os.path.basename(ifile)) ,
+            name=os.path.splitext(os.path.basename(ifile))[0],
             source=ifile,
             color=color,
             visibility=Visibility[extension],
