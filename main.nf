@@ -126,7 +126,7 @@ params.gtf = params.genome ? params.genomes[ params.genome ].gtf ?: false : fals
 params.gff = params.genome ? params.genomes[ params.genome ].gff ?: false : false
 params.bed12 = params.genome ? params.genomes[ params.genome ].bed12 ?: false : false
 params.hisat2_index = params.genome ? params.genomes[ params.genome ].hisat2 ?: false : false
-params.species = params.genome ? params.genomes[ params.genome ].species ?: false : false
+params.species = params.genome ? params.genomes[ params.genome ].species ?: params.genome : false
 
 ch_mdsplot_header = Channel.fromPath("$baseDir/assets/mdsplot_header.txt", checkIfExists: true)
 ch_heatmap_header = Channel.fromPath("$baseDir/assets/heatmap_header.txt", checkIfExists: true)
