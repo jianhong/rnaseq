@@ -1746,7 +1746,7 @@ process createBigWig {
  * STEP 16: Create IGV session file
  */
 process IGV {
-    publishDir "${params.outdir}/igv", mode: 'copy'
+    publishDir "${params.outdir}/igv", mode: 'copyNoFollow'
 
     input:
     path bigwigs from ch_bigwig_igv.collect().ifEmpty([])
