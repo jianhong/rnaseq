@@ -94,7 +94,7 @@ def create_trackhub(OutFolder,ListFile,Genome,EMAIL,PathPrefix=''):
     
     for ifile,color in fileList:
         extension = os.path.splitext(ifile)[1].replace(".", "").lower()
-        filename = trackhub.helpers.sanitize(os.path.splitext(os.path.basename(ifile))[0], strict=False)
+        filename = trackhub.helpers.sanitize(os.path.splitext(os.path.basename(ifile))[0].replace(".", "_"), strict=False)
         if extension in ['bed','broadpeak','narrowpeak']:
           pass
         elif extension in TrackType.keys():
