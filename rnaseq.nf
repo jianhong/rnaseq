@@ -10,16 +10,15 @@ params.summary_params = [:]
 
 // Check input path parameters to see if they exist
 checkPathParamList = [
-    params.input, params.multiqc_config,
+    params.multiqc_config,
     params.fasta, params.transcript_fasta, params.additional_fasta,
     params.gtf, params.gff, params.gene_bed, 
     params.ribo_database_manifest, params.splicesites,
     params.star_index, params.hisat2_index, params.rsem_index, params.salmon_index
 ]
+
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
-// Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
 if (!params.gtf && !params.gff) { exit 1, "No GTF or GFF3 annotation specified!" }
 if (params.gtf && params.gff)   { Checks.gtf_gff_warn(log) }
@@ -256,7 +255,10 @@ def pass_percent_mapped = [:]
 def fail_percent_mapped = [:]
 
 workflow RNASEQ {
-
+    take:
+    ch_input
+    
+    main:
     /*
      * SUBWORKFLOW: Uncompress and prepare reference genome files
      */

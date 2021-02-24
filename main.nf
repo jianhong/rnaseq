@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                         nf-core/rnaseq
+                         jianhong/rnaseq
 ========================================================================================
- nf-core/rnaseq Analysis Pipeline.
+ jianhong/rnaseq Analysis Pipeline.
  #### Homepage / Documentation
- https://github.com/nf-core/rnaseq
+ https://github.com/jianhong/rnaseq
 ----------------------------------------------------------------------------------------
 */
 
@@ -17,7 +17,7 @@ nextflow.enable.dsl = 2
 
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
-    def command = "nextflow run nf-core/rnaseq --input samplesheet.csv --genome GRCh37 -profile docker"
+    def command = "nextflow run jianhong/rnaseq --input samplesheet.csv --genome GRCh37 -profile docker"
     log.info Schema.params_help(workflow, params, json_schema, command)
     exit 0
 }
@@ -65,19 +65,27 @@ Checks.genome_exists(params, log)
 ////////////////////////////////////////////////////
 
 workflow {
-    if (params.public_data_ids) {
-        /*
-         * SUBWORKFLOW: Get SRA run information for public database ids, download and md5sum check FastQ files, auto-create samplesheet
-         */
-        include { SRA_DOWNLOAD } from './sra_download' addParams( summary_params: summary_params )
-        SRA_DOWNLOAD ()
-    } else {
-        /*
-         * SUBWORKFLOW: Run main nf-core/rnaseq analysis pipeline
-         */
-        include { RNASEQ } from './rnaseq' addParams( summary_params: summary_params )
-        RNASEQ ()
-    }
+    if(params.input){
+      if (params.public_data_ids) {
+          /*
+           * SUBWORKFLOW: Get SRA run information for public database ids, download and md5sum check FastQ files, auto-create samplesheet
+           */
+          include { JO_SRADOWNLOADER } from './modules/local/process/sra_downloader/main'
+          id = Channel.of(params.public_data_ids)
+          JO_SRADOWNLOADER(id)
+          JO_SRADOWNLOADER.out.design
+            .collectFile(keepHeader:true, name:"desginTable.csv")
+            .set{ch_input}
+      }else{
+        ch_input = file(params.input, checkIfExists:true)
+      }
+    } else { exit 1, 'Samples design file not specified!' }
+    
+    /*
+     * SUBWORKFLOW: Run main jianhong/rnaseq analysis pipeline
+     */
+    include { RNASEQ } from './rnaseq' addParams( summary_params: summary_params )
+    RNASEQ (ch_input)
 }
 
 ////////////////////////////////////////////////////
