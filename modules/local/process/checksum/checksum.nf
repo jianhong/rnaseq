@@ -1,6 +1,8 @@
 // Import generic module functions
 include { initOptions; saveFiles } from '../functions'
 
+params.options = [:]
+
 /*
  * MD5 checksums
  */
@@ -8,17 +10,16 @@ process JO_CHECKSUMS {
     tag "$name"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:options, publish_dir:task.process.tokenize(':')[-1].tokenize('_')[1].toLowerCase(), publish_id:name) }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:task.process.tokenize(':')[-1].tokenize('_')[1].toLowerCase(), publish_id:name) }
     
     input:
     tuple val(meta), path(reads)
-    val options
 
     output:
     path "md5.*.txt", emit: md5
     
     script:
-    def ioptions = initOptions(options)
+    def ioptions = initOptions(params.options)
     def prefix   = ioptions.suffix ? "${meta.id}.${ioptions.suffix}" : "${meta.id}"
     if (meta.single_end) {
         """
